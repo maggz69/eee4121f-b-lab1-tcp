@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 # EEE4121F-B Lab 1
 # TCP
