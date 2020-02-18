@@ -2,6 +2,7 @@
 
 # EEE4121F-B Lab 1
 # TCP
+# Modified from https://github.com/mininet/mininet/wiki/Bufferbloat
 
 from mininet.topo import Topo
 from mininet.node import CPULimitedHost
@@ -91,10 +92,10 @@ class TCPTopo(Topo):
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
 # Mininet!
-def start_tcpprobe(outfile="cwnd.txt"):
-    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
-    Popen("cat /proc/net/tcpprobe > %s/%s" % (args.dir, outfile),
-          shell=True)
+# def start_tcpprobe(outfile="cwnd.txt"):
+#     os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
+#     Popen("cat /proc/net/tcpprobe > %s/%s" % (args.dir, outfile),
+#           shell=True)
 
 def stop_tcpprobe():
     Popen("killall -9 cat", shell=True).wait()
@@ -153,7 +154,7 @@ def tcp():
     net.pingAll()
 
     # Start all the monitoring processes
-    start_tcpprobe("cwnd.txt")
+    # start_tcpprobe("cwnd.txt")
 
     # TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "switch", I monitor one of the interfaces.  Which
