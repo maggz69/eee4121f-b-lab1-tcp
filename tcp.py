@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # EEE4121F-B Lab 1
 # TCP
@@ -78,12 +78,13 @@ class TCPTopo(Topo):
     "Simple topology for TCP experiment."
 
     def build(self, n=2):
-        # TODO: create two hosts
+        # TODO1: create two hosts
         
         # Here I have created a switch.  If you change its name, its
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
-        # TODO: Add links with appropriate characteristics
+        
+        # TODO2: Add links with appropriate characteristics
         
         
         
@@ -92,10 +93,9 @@ class TCPTopo(Topo):
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
 # Mininet!
-# def start_tcpprobe(outfile="cwnd.txt"):
-#     os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
-#     Popen("cat /proc/net/tcpprobe > %s/%s" % (args.dir, outfile),
-#           shell=True)
+def start_tcpprobe(outfile="cwnd.txt"):
+    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
+    Popen("cat /proc/net/tcpprobe > %s/%s" % (args.dir, outfile),shell=True)
 
 def stop_tcpprobe():
     Popen("killall -9 cat", shell=True).wait()
@@ -108,7 +108,8 @@ def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
 
 def start_iperf(net):
     
-    # TODO: Retrieve the hosts, replace with appropriate names
+    # TODO4: Retrieve the hosts, replace with appropriate names
+    # There should be to hosts, one is added already
     h1 = net.get('h1')
     
     
@@ -116,9 +117,10 @@ def start_iperf(net):
     # For those who are curious about the -w 16m parameter, it ensures
     # that the TCP flow is not receiver window limited.  If it is,
     # there is a chance that the router buffer may not get filled up.
+    
     server = h1.popen("iperf -s -w 16m")
-    # TODO: Start the iperf client on h1 and h2.  Ensure that you create two
-    # long lived TCP flows in both directions.
+    # TODO4: Start the iperf client on h1 and h2.  Ensure that you create two
+    # long lived TCP flows in both directions (one is already created above)
     
     
 def start_webserver(net):
@@ -128,9 +130,9 @@ def start_webserver(net):
     return [proc]
 
 def start_ping(net):
-    # TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
+    # TODO5: Start a ping train from h1 to h2 (or h2 to h1, does it
     # matter?)  Measure RTTs every 0.1 second.  Read the ping man page
-    # to see how to do this.
+    # to see how to do this https://linux.die.net/man/8/ping
 
     # Hint: Use host.popen(cmd, shell=True).  If you pass shell=True
     # to popen, you can redirect cmd's output using shell syntax.
@@ -156,7 +158,7 @@ def tcp():
     # Start all the monitoring processes
     # start_tcpprobe("cwnd.txt")
 
-    # TODO: Start monitoring the queue sizes.  Since the switch I
+    # TODO3: Start monitoring the queue sizes.  Since the switch I
     # created is "switch", I monitor one of the interfaces.  Which
     # interface?  The interface numbering starts with 1 and increases.
     # Depending on the order you add links to your network, this
@@ -164,11 +166,12 @@ def tcp():
     qmon = start_qmon(iface='s0-eth2',
                       outfile='%s/q.txt' % (args.dir))
 
-    # TODO: Start iperf, webservers, etc.
+    # TODO4: Start iperf 
+    # TODO5: Start ping trains
     
     
 
-    # TODO: measure the time it takes to complete webpage transfer
+    # TODO6: measure the time it takes to complete webpage transfer
     # from h1 to h2 (say) 3 times.  Hint: check what the following
     # command does: curl -o /dev/null -s -w %{time_total} google.com
     # Now use the curl command to fetch webpage from the webserver you
