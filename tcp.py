@@ -4,6 +4,7 @@
 # TCP
 # Modified from https://github.com/mininet/mininet/wiki/Bufferbloat
 
+import json
 from mininet.topo import Topo
 from mininet.node import CPULimitedHost
 from mininet.link import TCLink
@@ -18,7 +19,7 @@ from multiprocessing import Process
 from argparse import ArgumentParser
 
 from monitor import monitor_qlen
-import termcolor as T
+# import termcolor as T
 
 import sys
 import os
@@ -38,16 +39,16 @@ parser.add_argument('--bw-host', '-B',
 parser.add_argument('--bw-net', '-b',
                     type=float,
                     help="Bandwidth of bottleneck (network) link (Mb/s)",
-                    required=True)
+                    default=2)
 
 parser.add_argument('--delay',
                     type=float,
                     help="Link propagation delay (ms)",
-                    required=True)
+                    default=10)
 
 parser.add_argument('--dir', '-d',
                     help="Directory to store outputs",
-                    required=True)
+                    default='results')
 
 parser.add_argument('--time', '-t',
                     help="Duration (sec) to run the experiment",
@@ -79,14 +80,21 @@ class TCPTopo(Topo):
 
     def build(self, n=2):
         # TODO1: create two hosts
+
+
+
         
         # Here I have created a switch.  If you change its name, its
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
+
+        leftHost = self.addHost('h1')
+        rightHost = self.addHost('h2')
         
         # TODO2: Add links with appropriate characteristics
-        
-        
+
+        self.addLink(leftHost, switch, bw=args.bw_host, delay=args.delay, max_queue_size=args.maxq)
+        self.addLink(rightHost, switch, bw=args.bw_host, delay=args.delay, max_queue_size=args.maxq)
         
         return
 
@@ -137,7 +145,54 @@ def start_ping(net):
     # Hint: Use host.popen(cmd, shell=True).  If you pass shell=True
     # to popen, you can redirect cmd's output using shell syntax.
     # i.e. ping ... > /path/to/ping.
+
+    print("Starting the Ping train")
+
+    h1 = net.get('h1')
+    h2 = net.get('h2')
+
+    ping = h1.popen("ping -i 0.1 -w %d %s > %s/ping.txt" % (args.time/0.1, h2.IP(), args.dir), shell=True)
     
+    return [ping]
+
+def measureLatency(net):
+    print("Measuring latency")
+
+    server = net.get('h1')    
+    client = net.get('h2')
+
+    curlCommand = "curl -o /dev/null -s -w '%%{time_total}\n' http://%s:8000/index.html > %s/curl.txt" % (server.IP(), args.dir)
+
+    start_time = time.time()
+    times = []
+    iteration = 0
+
+    while True:
+        start_transfer = time.time()
+        proc = client.popen(curlCommand, shell=True)
+        proc.wait()
+        end_transfer = time.time()
+        times.append({iteration: end_transfer - start_transfer})
+
+        iteration += 1
+        sleep(5)
+
+        total_time = time.time() - start_time
+
+        print("Total time: %f. Time remaining %f" % (total_time, args.time - total_time))
+
+        if total_time > args.time:
+            break
+
+    with open("%s/latency.txt" % args.dir, "w") as f:
+        f.write(json.dumps(times))
+
+    return times
+
+
+
+
+
     
   
 
@@ -165,10 +220,14 @@ def tcp():
     # number may be 1 or 2.  Ensure you use the correct number.
     qmon = start_qmon(iface='s0-eth2',
                       outfile='%s/q.txt' % (args.dir))
+    
+    
 
     # TODO4: Start iperf 
-    # TODO5: Start ping trains
+    start_iperf(net)
     
+    # TODO5: Start ping trains
+    start_ping(net)
     
 
     # TODO6: measure the time it takes to complete webpage transfer
@@ -180,16 +239,7 @@ def tcp():
     # Hint: have a separate function to do this and you may find the
     # loop below useful.
     
-    start_time = time()
-    while True:
-        # do the measurement (say) 3 times.
-       
-        sleep(5)
-        now = time()
-        delta = now - start_time
-        if delta > args.time:
-            break
-        print("%.1fs left..." % (args.time - delta))
+    results = measureLatency(net)
     
        
     # TODO: compute average (and standard deviation) of the fetch
